@@ -2,13 +2,13 @@
     'use strict';
 
     // Define values for keycodes
-    var VK_ENTER      = 13;
-    var VK_ESC        = 27;
-    var VK_SPACE      = 32;
-    var VK_LEFT       = 37;
-    var VK_UP         = 38;
-    var VK_RIGHT      = 39;
-    var VK_DOWN       = 40;
+    var VK_ENTER = 13;
+    var VK_ESC = 27;
+    var VK_SPACE = 32;
+    var VK_LEFT = 37;
+    var VK_UP = 38;
+    var VK_RIGHT = 39;
+    var VK_DOWN = 40;
 
     var LAST_ID = 0;
 
@@ -74,26 +74,25 @@
 
         handleKeyDown: function(e) {
             switch (e.keyCode) {
-            case VK_DOWN:
-                if (!this.listbox.hidden) {
-                    this.listbox.nextActiveListItem();
-                }
-                break;
-            case VK_UP:
-                if (!this.listbox.hidden) {
-                    this.listbox.previousActiveListItem();
-                }
-                break;
-            case VK_ENTER:
-                var active = this.listbox.activeItem;
-                if (!active)
+                case VK_DOWN:
+                    if (!this.listbox.hidden) {
+                        this.listbox.nextActiveListItem();
+                    }
                     break;
-                this.setSelected(active);
-                this.hideListbox();
-                break;
-            case VK_ESC:
-                this.hideListbox();
-                break;
+                case VK_UP:
+                    if (!this.listbox.hidden) {
+                        this.listbox.previousActiveListItem();
+                    }
+                    break;
+                case VK_ENTER:
+                    var active = this.listbox.activeItem;
+                    if (!active) break;
+                    this.setSelected(active);
+                    this.hideListbox();
+                    break;
+                case VK_ESC:
+                    this.hideListbox();
+                    break;
             }
 
             return;
@@ -109,8 +108,7 @@
          * @param {Element} el
          */
         setActiveDescendant: function(el) {
-            if (!el.id)
-                return;
+            if (!el.id) return;
             this.el.setAttribute('aria-activedescendant', el.id);
         }
     };
@@ -123,18 +121,26 @@
     function ListBox(el, textbox) {
         this.el = el;
         this.textbox = textbox;
-        this.items = Array.prototype.slice.call(el.querySelectorAll('[role=option]'));
+        this.items = Array.prototype.slice.call(
+            el.querySelectorAll('[role=option]')
+        );
         for (var i = 0; i < this.items.length; i++) {
             var item = this.items[i];
             item.id = nextId();
 
-            item.addEventListener('mouseover', this.handleHoverOnItem.bind(this));
-            item.addEventListener('mousedown', this.handleClickOnItem.bind(this), true);
+            item.addEventListener(
+                'mouseover',
+                this.handleHoverOnItem.bind(this)
+            );
+            item.addEventListener(
+                'mousedown',
+                this.handleClickOnItem.bind(this),
+                true
+            );
         }
 
         this.visibleItems = this.items.slice();
-    };
-
+    }
 
     ListBox.prototype = {
         toggle: function() {
@@ -157,7 +163,9 @@
             this.visibleItems = [];
             var foundItems = 0;
             for (var item of this.items) {
-                if (item.textContent.toLowerCase().startsWith(str.toLowerCase())) {
+                if (
+                    item.textContent.toLowerCase().startsWith(str.toLowerCase())
+                ) {
                     foundItems++;
                     item.hidden = false;
                     this.visibleItems.push(item);
@@ -170,36 +178,36 @@
                 this.hide();
             } else {
                 // FIXME: ChromeVox reports the wrong list size and position
+                for (var i = 0; i < this.visibleItems.length; i++) {
+                    var item = this.visibleItems[i];
+                    item.setAttribute('aria-posinset', i + 1);
+                    item.setAttribute('aria-setsize', this.visibleItems.length);
+                }
             }
         },
 
         show: function() {
-            if (!this.hidden)
-                return;
+            if (!this.hidden) return;
 
             this.el.removeAttribute('hidden');
         },
 
         hide: function() {
-            if (this.hidden)
-                return;
+            if (this.hidden) return;
 
-            if (this.activeItem)
-                this.activeItem.classList.remove('active');
+            if (this.activeItem) this.activeItem.classList.remove('active');
             this.el.setAttribute('hidden', '');
         },
 
         handleHoverOnItem: function(e) {
             var newIdx = this.visibleItems.indexOf(e.target);
-            if (newIdx < 0)
-                return;
+            if (newIdx < 0) return;
             this.changeActiveListitem(newIdx);
         },
 
         handleClickOnItem: function(e) {
             var item = e.target;
-            if (this.items.indexOf(item) < 0)
-                return;
+            if (this.items.indexOf(item) < 0) return;
             this.textbox.setSelected(item);
             this.hide();
         },
@@ -207,8 +215,7 @@
         nextActiveListItem: function() {
             var active = this.activeItem;
             var activeIdx = -1;
-            if (active)
-                activeIdx = this.visibleItems.indexOf(active);
+            if (active) activeIdx = this.visibleItems.indexOf(active);
 
             var newIdx = activeIdx;
             newIdx = (newIdx + 1) % this.visibleItems.length;
@@ -218,13 +225,11 @@
         previousActiveListItem: function() {
             var active = this.activeItem;
             var activeIdx = -1;
-            if (active)
-                activeIdx = this.visibleItems.indexOf(active);
+            if (active) activeIdx = this.visibleItems.indexOf(active);
 
             var newIdx = activeIdx;
             newIdx--;
-            if (newIdx < 0)
-                newIdx += this.visibleItems.length;
+            if (newIdx < 0) newIdx += this.visibleItems.length;
 
             this.changeActiveListitem(newIdx);
         },
@@ -232,11 +237,11 @@
         changeActiveListitem: function(newIdx) {
             var active = this.activeItem;
             var newActive = this.visibleItems[newIdx];
-            if (active)
-                active.classList.remove('active');
+            if (active) active.classList.remove('active');
             newActive.classList.add('active');
 
             // FIXME: need to ensure focus stays on textbox, but report active list option
+            this.textbox.setActiveDescendant(newActive);
         }
     };
 
@@ -244,4 +249,4 @@
     var listbox = document.querySelector('[role=listbox]');
 
     new ComboBox(input, listbox);
-})()
+})();
